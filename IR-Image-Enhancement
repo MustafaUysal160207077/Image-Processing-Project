@@ -1,0 +1,108 @@
+%===================================================================
+clc
+clear all
+close all
+%===================================================================
+giris_imgesi = imread('test2.bmp');
+if size(giris_imgesi, 3) > 1
+    giris_imgesi = rgb2gray(giris_imgesi);
+end
+%giris_imgesi = double(giris_imgesi);   
+%giris_imgesi = uint8(giris_imgesi);
+a =    2;
+beta = 2;
+n = 0 : 255; 
+%===================================================================
+giris_imgesinin_histogrami = imhist(giris_imgesi);
+modifiye_edilmis_histogram = zeros(256,1);
+modifiye_edilmis_histogram(1:256)  = (log( giris_imgesinin_histogrami(1:256) + (a) )).^(beta);
+%===================================================================
+sifira_esit_olmayan_elemanlar = modifiye_edilmis_histogram~= 0;
+%***********************
+sifira_esit_olmayan_elemanlarin_toplami = sum(modifiye_edilmis_histogram(sifira_esit_olmayan_elemanlar));
+sifira_esit_olmayan_eleman_sayisi = size(sifira_esit_olmayan_elemanlar,1);
+plato_limit = sifira_esit_olmayan_elemanlarin_toplami/sifira_esit_olmayan_eleman_sayisi; 
+%plato_limit=5;
+%----------------------------------
+kirpilmis_histogram = zeros(256,1);
+for i=1:256
+    if((modifiye_edilmis_histogram(i)) >= plato_limit)
+        kirpilmis_histogram(i) = plato_limit;
+    else
+        kirpilmis_histogram(i) = (modifiye_edilmis_histogram(i));
+    end
+end
+%===================================================================
+PDF = kirpilmis_histogram / (sum(kirpilmis_histogram));
+CDF=cumsum(PDF);
+%----------------------------------
+[satir,sutun] = size(giris_imgesi);
+iyilestirme_sonrasi_degerler = (255 * CDF);
+cikis_imgesi = iyilestirme_sonrasi_degerler(giris_imgesi+1);
+%===================================================================
+figure('Name','Algoritma Sonucu','NumberTitle','off');
+subplot(211);
+imshow(cikis_imgesi,[]);
+subplot(212);
+cikis_imgesinin_histogrami = imhist(uint8(cikis_imgesi));
+%plot(cikis_imgesinin_histogrami);
+%stem(n, cikis_imgesinin_histogrami); 
+stem(n, cikis_imgesinin_histogrami, 'LineWidth', 1)
+grid on;
+set(gcf, 'Units', 'Normalized', 'OuterPosition', [0 0 1 1]);
+set(gcf, 'Toolbar', 'none', 'Menu', 'none');
+set(gcf, 'Name', 'Sonuç', 'NumberTitle', 'Off')
+%===================================================================
+figure('Name','Aşamalar','NumberTitle','off');
+subplot(231);
+plot(giris_imgesinin_histogrami);
+grid on;
+title('Orijinal Histogram')
+%----------------------------------
+subplot(232);
+plot(modifiye_edilmis_histogram);
+grid on;
+title('Modifiye Edilmiş Histogram')
+%----------------------------------
+subplot(234);
+plot(PDF);
+grid on;
+title('PDF')
+%----------------------------------
+subplot(235);
+plot(CDF);
+grid on;
+title('CDF')
+%----------------------------------
+subplot(236);
+plot(iyilestirme_sonrasi_degerler);
+grid on;
+title('İyileştirme Sonrası Değerler')
+%----------------------------------
+subplot(233);
+plot(kirpilmis_histogram);
+grid on;
+title('Kırpılmış Histogram')
+%===================================================================
+figure('Name','Orijinal İmge','NumberTitle','off');
+subplot(211);
+imshow(giris_imgesi);
+subplot(212);
+%plot(giris_imgesinin_histogrami);
+%stem(n, giris_imgesinin_histogrami); 
+stem(n, giris_imgesinin_histogrami, 'LineWidth', 1)
+grid on;
+set(gcf, 'Units', 'Normalized', 'OuterPosition', [0 0 1 1]);
+set(gcf, 'Toolbar', 'none', 'Menu', 'none');
+set(gcf, 'Name', 'Orijinal İmge', 'NumberTitle', 'Off')
+%===================================================================
+%% DENEYSEL SONUCLAR%%
+entropi=entropy(uint8(cikis_imgesi));
+
+ssim_degeri = ssim(uint8(cikis_imgesi),giris_imgesi);
+
+q=(pi/2)*(1-cikis_imgesi/255); 
+y= sum(sum(min(q,1-q)))/(satir*sutun); 
+
+%y= sum(sum(min(q,abs(1-q))))/(satir*sutun); 
+%y= sum(sum(min(q,pi/2-q)))/(satir*sutun);
